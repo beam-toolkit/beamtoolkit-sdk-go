@@ -14,7 +14,7 @@ package main
 
 import (
 	"fmt"
-	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service"
+	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service/api"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 		scrapeless.WithAPIKey("your-api-key"),
 	)
 
-	scraper, err := client.Scraper(&scrapeless.ServiceConfig{
+	scraper, err := client.CreateScraperTask(&scrapeless.ServiceConfig{
 		Actor: "scraper.google.trends",
 		Input: map[string]any{
 			"keywords": "iphone14,iphone13",
@@ -38,9 +38,8 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Scraper: %+v\n", scraper.Message)
+	fmt.Printf("Scraper: %+v\n", string(scraper.Res.Body()))
 }
-
 ```
 
 ### Web Unlocker
@@ -49,7 +48,7 @@ package main
 
 import (
 	"fmt"
-	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service"
+	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service/api"
 )
 
 func main() {
@@ -60,10 +59,10 @@ func main() {
 	unlocker, err := client.Unlocker(&scrapeless.ServiceConfig{
 		Actor: "unlocker.webunlocker",
 		Input: map[string]any{
-			"url": "https://www.scrapeless.com",
+			"url":           "https://www.scrapeless.com",
 			"proxy_country": "ANY",
-			"method": "GET",
-			"redirect": false,
+			"method":        "GET",
+			"redirect":      false,
 		},
 	})
 
@@ -72,8 +71,9 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Scraper: %+v\n", unlocker.Message)
+	fmt.Printf("Scraper: %+v\n", string(unlocker.Res.Body()))
 }
+
 ```
 
 ### Captcha Solver
@@ -82,7 +82,7 @@ package main
 
 import (
 	"fmt"
-	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service"
+	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service/api"
 )
 
 func main() {
@@ -90,7 +90,7 @@ func main() {
 		scrapeless.WithAPIKey("your-api-key"),
 	)
 
-	captcha, err := client.Captcha(&scrapeless.ServiceConfig{
+	captcha, err := client.CreateCaptchaTask(&scrapeless.ServiceConfig{
 		Actor: "captcha.recaptcha",
 		Input: map[string]any{
 			"version":    "v2",
@@ -105,6 +105,6 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Captcha:%+v\n", captcha.Message)
+	fmt.Printf("Captcha:%+v\n", string(captcha.Res.Body()))
 }
 ```

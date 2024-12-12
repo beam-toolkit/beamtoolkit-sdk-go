@@ -1,4 +1,4 @@
-package scrapeless
+package api
 
 type Options interface {
 	apply(*options)

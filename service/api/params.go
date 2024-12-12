@@ -1,7 +1,8 @@
-package scrapeless
+package api
 
 import (
 	"errors"
+	"github.com/go-resty/resty/v2"
 )
 
 var (
@@ -16,9 +17,7 @@ type ServiceConfig struct {
 }
 
 type Response struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Data    any    `json:"data"`
+	Res *resty.Response
 }
 
 type SdkError struct {

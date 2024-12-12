@@ -1,4 +1,4 @@
-package scrapeless
+package api
 
 import (
 	"github.com/scrapeless-ai/scrapeless-sdk-go/service/version"

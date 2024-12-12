@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service"
+	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service/api"
 )
 
 func main() {
@@ -25,5 +25,5 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Scraper: %+v\n", unlocker.Message)
+	fmt.Printf("Scraper: %+v\n", string(unlocker.Res.Body()))
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service"
+	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service/api"
 )
 
 func main() {
@@ -10,7 +10,7 @@ func main() {
 		scrapeless.WithAPIKey("your-api-key"),
 	)
 
-	captcha, err := client.Captcha(&scrapeless.ServiceConfig{
+	captcha, err := client.CreateCaptchaTask(&scrapeless.ServiceConfig{
 		Actor: "captcha.recaptcha",
 		Input: map[string]any{
 			"version":    "v2",
@@ -25,5 +25,5 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Captcha:%+v\n", captcha.Message)
+	fmt.Printf("Captcha:%+v\n", string(captcha.Res.Body()))
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service"
+	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service/api"
 )
 
 func main() {
@@ -10,7 +10,7 @@ func main() {
 		scrapeless.WithAPIKey("your-api-key"),
 	)
 
-	scraper, err := client.Scraper(&scrapeless.ServiceConfig{
+	scraper, err := client.CreateScraperTask(&scrapeless.ServiceConfig{
 		Actor: "scraper.google.trends",
 		Input: map[string]any{
 			"keywords": "iphone14,iphone13",
@@ -26,5 +26,5 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Scraper: %+v\n", scraper.Message)
+	fmt.Printf("Scraper: %+v\n", string(scraper.Res.Body()))
 }

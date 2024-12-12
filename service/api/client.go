@@ -1,16 +1,17 @@
-package scrapeless
+package api
 
 import (
 	"encoding/json"
-	"github.com/valyala/fasthttp"
+	"github.com/go-resty/resty/v2"
+	"time"
 )
 
 type Client struct {
 	cfg  options
-	http *fasthttp.Client
+	http *resty.Client
 }
 
-const baseUrl = "https://api.scrapeless.com/api/v2"
+const baseUrl = "https://api.scrapeless.com/api/v1"
 
 func NewClient(opts ...Options) *Client {
 	client := &Client{cfg: options{}}
@@ -19,7 +20,11 @@ func NewClient(opts ...Options) *Client {
 		opt.apply(&client.cfg)
 	}
 
-	client.http = new(fasthttp.Client)
+	client.http = resty.New().
+		SetBaseURL(baseUrl).
+		SetCloseConnection(true).
+		SetRetryCount(3).
+		SetRetryWaitTime(2 * time.Second)
 
 	return client
 }
@@ -39,29 +44,16 @@ func (c *Client) worker(url string, params *ServiceConfig) (*Response, error) {
 	}
 
 	workUrl := baseUrl + url
-	req := fasthttp.AcquireRequest()
-	req.Header.SetMethod(fasthttp.MethodPost)
-	req.SetRequestURI(workUrl)
-	req.Header.Set("x-api-token", c.cfg.apiKey)
-	req.SetBody(jsonData)
-
-	resp := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseResponse(resp)
-	defer fasthttp.ReleaseRequest(req)
-
-	err = c.http.Do(req, resp)
+	resp, err := c.http.R().
+		SetHeader("x-api-token", c.cfg.apiKey).
+		SetBody(jsonData).
+		Post(workUrl)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var body *Response
-	bodyErr := json.Unmarshal(resp.Body(), &body)
-	if bodyErr != nil {
-		return nil, bodyErr
-	}
-
-	return body, nil
+	return &Response{Res: resp}, nil
 }
 
 func (c *Client) get(url string, taskId string) (*Response, error) {
@@ -72,32 +64,20 @@ func (c *Client) get(url string, taskId string) (*Response, error) {
 		return nil, NotFoundTaskIdError
 	}
 
-	req := fasthttp.AcquireRequest()
-	req.Header.SetMethod(fasthttp.MethodGet)
-	req.SetRequestURI(baseUrl + url + "/" + taskId)
-	req.Header.Set("x-api-token", c.cfg.apiKey)
+	workUrl := baseUrl + url + "/" + taskId
+	resp, err := c.http.R().
+		SetHeader("x-api-token", c.cfg.apiKey).
+		Get(workUrl)
 
-	resp := fasthttp.AcquireResponse()
-
-	defer fasthttp.ReleaseRequest(req)
-	defer fasthttp.ReleaseResponse(resp)
-
-	err := c.http.Do(req, resp)
 	if err != nil {
 		return nil, err
 	}
 
-	var body *Response
-	bodyErr := json.Unmarshal(resp.Body(), &body)
-	if bodyErr != nil {
-		return nil, bodyErr
-	}
-
-	return body, nil
+	return &Response{Res: resp}, nil
 }
 
-func (c *Client) Scraper(params *ServiceConfig) (*Response, error) {
-	resp, err := c.worker("/scraper/request", params)
+func (c *Client) CreateScraperTask(params *ServiceConfig) (*Response, error) {
+	resp, err := c.worker("/scraper/requestv2", params)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +94,7 @@ func (c *Client) Unlocker(params *ServiceConfig) (*Response, error) {
 	return resp, nil
 }
 
-func (c *Client) Captcha(params *ServiceConfig) (*Response, error) {
+func (c *Client) CreateCaptchaTask(params *ServiceConfig) (*Response, error) {
 	resp, err := c.worker("/createTask", params)
 	if err != nil {
 		return nil, err
