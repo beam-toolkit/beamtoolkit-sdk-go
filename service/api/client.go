@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/go-resty/resty/v2"
 	"time"
@@ -33,7 +34,7 @@ func (c *Client) isConfigured() bool {
 	return c.cfg.apiKey != ""
 }
 
-func (c *Client) worker(url string, params *ServiceConfig) (*Response, error) {
+func (c *Client) post(url string, params *ServiceConfig) (*Response, error) {
 	if !c.isConfigured() {
 		return nil, NotConfiguredError
 	}
@@ -77,7 +78,7 @@ func (c *Client) get(url string, taskId string) (*Response, error) {
 }
 
 func (c *Client) CreateScraperTask(params *ServiceConfig) (*Response, error) {
-	resp, err := c.worker("/scraper/requestv2", params)
+	resp, err := c.post("/scraper/requestv2", params)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +87,7 @@ func (c *Client) CreateScraperTask(params *ServiceConfig) (*Response, error) {
 }
 
 func (c *Client) Unlocker(params *ServiceConfig) (*Response, error) {
-	resp, err := c.worker("/unlocker/request", params)
+	resp, err := c.post("/unlocker/request", params)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func (c *Client) Unlocker(params *ServiceConfig) (*Response, error) {
 }
 
 func (c *Client) CreateCaptchaTask(params *ServiceConfig) (*Response, error) {
-	resp, err := c.worker("/createTask", params)
+	resp, err := c.post("/createTask", params)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +104,7 @@ func (c *Client) CreateCaptchaTask(params *ServiceConfig) (*Response, error) {
 	return resp, nil
 }
 
-func (c *Client) GetCaptchaResult(taskId string) (*Response, error) {
+func (c *Client) GetCaptchaTaskResult(taskId string) (*Response, error) {
 	resp, err := c.get("/getTaskResult", taskId)
 
 	if err != nil {
@@ -120,4 +121,39 @@ func (c *Client) GetScraperResult(taskId string) (*Response, error) {
 	}
 
 	return resp, nil
+}
+
+func (c *Client) SolverCaptcha(context context.Context, params *ServiceConfig) (*Response, error) {
+	resp, err := c.post("/createTask", params)
+	if err != nil {
+		return nil, err
+	}
+
+	var result CaptchaResult
+	unmarshalErr := json.Unmarshal(resp.Res.Body(), &result)
+	if unmarshalErr != nil {
+		return nil, unmarshalErr
+	}
+
+	for {
+		select {
+		case <-context.Done():
+			return nil, context.Err()
+		case <-time.After(time.Second):
+			res, getResultErr := c.GetCaptchaTaskResult(result.TaskId)
+			if getResultErr != nil {
+				return nil, getResultErr
+			}
+
+			var taskResult CaptchaTaskResult
+			unmarshalErr = json.Unmarshal(res.Res.Body(), &taskResult)
+			if unmarshalErr != nil {
+				return nil, unmarshalErr
+			}
+
+			if taskResult.Success {
+				return res, nil
+			}
+		}
+	}
 }

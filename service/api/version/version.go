@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/go-version"
 )
 
-const Version = "0.0.1"
+const Version = "0.0.2"
 
 const Prerelease = ""
 

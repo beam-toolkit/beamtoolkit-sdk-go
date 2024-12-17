@@ -81,8 +81,10 @@ func main() {
 package main
 
 import (
+	"context"
 	"fmt"
 	scrapeless "github.com/scrapeless-ai/scrapeless-sdk-go/service/api"
+	"time"
 )
 
 func main() {
@@ -90,7 +92,10 @@ func main() {
 		scrapeless.WithAPIKey("your-api-key"),
 	)
 
-	captcha, err := client.CreateCaptchaTask(&scrapeless.ServiceConfig{
+	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancelFunc()
+
+	captcha, err := client.SolverCaptcha(timeout, &scrapeless.ServiceConfig{
 		Actor: "captcha.recaptcha",
 		Input: map[string]any{
 			"version":    "v2",
