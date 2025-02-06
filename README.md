@@ -1,4 +1,4 @@
-# Scrapeless Go SDK
+# Beam Toolkit Go SDK
 
 ## Usage
 
